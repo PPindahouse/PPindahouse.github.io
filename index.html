@@ -6,57 +6,35 @@
 <body>
  <div>
   <section>
-   <heading>
+   <heading> 
     <h1>Ryan J Shih</h1>
-    <h3>import RPi.GPIO as GPIO
-import time
-
-# Use the BCM pin numbering scheme (GPIO numbers, not board physical pin numbers)
-GPIO.setmode(GPIO.BCM)
-# Suppress warnings
-GPIO.setwarnings(False)
-
-# Define the GPIO pin connected to the sensor's OUT pin (using GPIO 17 as an example)
-HALL_PIN = 17
-
-# Global variable to store the count of magnet passes
-sensor_counter = 0
-
-def sensor_callback(channel):
+    <h3><p>https://www.striphtml.com/text-tools/convert-text-to-html/
+     import smbus
+import time</p>
+<p># I2C address of the PCF8591 (usually 0x48)
+ADDRESS = 0x48</p>
+<p># Initialize I2C bus
+bus = smbus.SMBus(1)</p>
+<p>def read_analog(channel):
     """
-    This function is called every time a magnet is detected.
+    Reads analog value from PCF8591.
+    Channel range: 0 to 3 (AIN0 to AIN3)
     """
-    global sensor_counter
-    sensor_counter += 1
-    # Optional: print a message every time a magnet is detected
-    # print("Magnet detected! Current count: ", sensor_counter)
-
-def main():
-    print("Hall sensor test program running...")
-    print("Press Ctrl+C to exit.")
-
-    # Set the HALL_PIN as an input pin
-    # Use internal pull-up resistor, as many sensors have open-collector outputs
-    GPIO.setup(HALL_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
-    # Add an event detection (interrupt) on the falling edge of the signal
-    # The falling edge usually indicates a magnet is present with a pull-up resistor
-    GPIO.add_event_detect(HALL_PIN, GPIO.FALLING, callback=sensor_callback, bouncetime=300)
-
-    try:
-        while True:
-            # Main loop keeps the script running
-            # Print the total count every few seconds
-            print(f"Total magnet detections: {sensor_counter}")
-            time.sleep(2)
-
-    except KeyboardInterrupt:
-        # Clean up GPIO settings when the program is interrupted by the user
-        GPIO.cleanup()
-        print("\nProgram exited and GPIO cleaned up.")
-
-if __name__ == "__main__":
-    main()
+    # 0x40 is the control byte for AIN0
+    bus.write_byte(ADDRESS, 0x40 + channel)</p>
+<p># Dummy read to start conversion
+    bus.read_byte(ADDRESS)</p>
+<p># Actual read (returns 0-255 for 8-bit precision)
+    return bus.read_byte(ADDRESS)</p>
+<p>try:
+    print("Reading Hall sensor analog values... Press Ctrl+C to stop.")
+    while True:
+        value = read_analog(0)  # Reading from AIN0
+        voltage = value * (3.3 / 255.0)  # Convert 0-255 to 0-3.3V</p>
+<p>print(f"Raw Value: {value} | Voltage: {voltage:.2f}V")
+        time.sleep(0.5)</p>
+<p>except KeyboardInterrupt:
+    print("\nProgram stopped.")</p>
 </h3>
    </heading>
   </section>
