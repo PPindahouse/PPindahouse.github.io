@@ -48,36 +48,34 @@ except KeyboardInterrupt:
     print("\nProgram stopped.")
 
 
-
-     import smbus
 import time
+import board
+import adafruit_dht
 
-# 0x48 is the standard I2C address for PCF8591
-address = 0x48
-bus = smbus.SMBus(1)
-
-def read_analog(channel):
-    # Sends command to read from specific channel (0-3)
-    bus.write_byte(address, 0x40 + channel)
-    bus.read_byte(address) # dummy read to settle sensor
-    return bus.read_byte(address)
+# Initial the dht device, with data pin connected to GPIO 4
+dhtDevice = adafruit_dht.DHT11(board.D4)
 
 try:
     while True:
-        # PCF8591 returns a raw 8-bit value (0-255)
-        raw_val = read_analog(0) 
-        
-        # Logic: 127 is usually the center (no magnet)
-        if raw_val > 180:
-            print(f"South Pole: {raw_val}")
-        elif raw_val < 80:
-            print(f"North Pole: {raw_val}")
-        else:
-            print(f"Idle: {raw_val}")
-            
-        time.sleep(0.2)
+        try:
+            # Read the values
+            temperature_c = dhtDevice.temperature
+            humidity = dhtDevice.humidity
+
+            print(f"Temp: {temperature_c:.1f} C | Humidity: {humidity}%")
+
+        except RuntimeError as error:
+            # Errors are common with DHT sensors; just keep trying
+            print(f"Reading error: {error.args[0]}")
+            time.sleep(2.0)
+            continue
+
+        time.sleep(2.0) # Wait 2 seconds between readings
+
 except KeyboardInterrupt:
-    print("Exit")
+    dhtDevice.exit()
+    print("Program stopped")
+
     </code></pre></h3>
    </heading>
   </section>
