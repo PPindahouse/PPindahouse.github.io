@@ -52,29 +52,29 @@ import time
 import board
 import adafruit_dht
 
-# Initial the dht device, with data pin connected to GPIO 4
-dhtDevice = adafruit_dht.DHT11(board.D4)
+# Initial the dht device, with data pin connected to GPIO 27 (board.D27)
+# Use adafruit_dht.DHT22(board.D27) if you have a DHT22/AM2302 sensor
+dhtDevice = adafruit_dht.DHT11(board.D27)
 
-try:
-    while True:
-        try:
-            # Read the values
-            temperature_c = dhtDevice.temperature
-            humidity = dhtDevice.humidity
+while True:
+    try:
+        # Print the values to the serial port
+        temperature_c = dhtDevice.temperature
+        humidity = dhtDevice.humidity
+        
+        if humidity is not None and temperature_c is not None:
+            print(f"Temp: {temperature_c:.1f} C    Humidity: {humidity}%")
+        
+    except RuntimeError as error:
+        # Errors happen fairly often, DHT's are hard to read, just keep going
+        print(f"Reading error: {error.args[0]}")
+        time.sleep(2.0)
+        continue
+    except Exception as error:
+        dhtDevice.exit()
+        raise error
 
-            print(f"Temp: {temperature_c:.1f} C | Humidity: {humidity}%")
-
-        except RuntimeError as error:
-            # Errors are common with DHT sensors; just keep trying
-            print(f"Reading error: {error.args[0]}")
-            time.sleep(2.0)
-            continue
-
-        time.sleep(2.0) # Wait 2 seconds between readings
-
-except KeyboardInterrupt:
-    dhtDevice.exit()
-    print("Program stopped")
+    time.sleep(2.0)
 
     </code></pre></h3>
    </heading>
