@@ -47,6 +47,37 @@ except KeyboardInterrupt:
     GPIO.cleanup()
     print("\nProgram stopped.")
 
+
+
+     import smbus
+import time
+
+# 0x48 is the standard I2C address for PCF8591
+address = 0x48
+bus = smbus.SMBus(1)
+
+def read_analog(channel):
+    # Sends command to read from specific channel (0-3)
+    bus.write_byte(address, 0x40 + channel)
+    bus.read_byte(address) # dummy read to settle sensor
+    return bus.read_byte(address)
+
+try:
+    while True:
+        # PCF8591 returns a raw 8-bit value (0-255)
+        raw_val = read_analog(0) 
+        
+        # Logic: 127 is usually the center (no magnet)
+        if raw_val > 180:
+            print(f"South Pole: {raw_val}")
+        elif raw_val < 80:
+            print(f"North Pole: {raw_val}")
+        else:
+            print(f"Idle: {raw_val}")
+            
+        time.sleep(0.2)
+except KeyboardInterrupt:
+    print("Exit")
     </code></pre></h3>
    </heading>
   </section>
