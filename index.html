@@ -8,34 +8,37 @@
   <section>
    <heading> 
     <h1>Ryan J Shih</h1>
-    <h3><p>https://www.striphtml.com/text-tools/convert-text-to-html/
-     import smbus
-import time</p>
-<p># I2C address of the PCF8591 (usually 0x48)
-ADDRESS = 0x48</p>
-<p># Initialize I2C bus
-bus = smbus.SMBus(1)</p>
-<p>def read_analog(channel):
-    """
-    Reads analog value from PCF8591.
-    Channel range: 0 to 3 (AIN0 to AIN3)
-    """
-    # 0x40 is the control byte for AIN0
-    bus.write_byte(ADDRESS, 0x40 + channel)</p>
-<p># Dummy read to start conversion
-    bus.read_byte(ADDRESS)</p>
-<p># Actual read (returns 0-255 for 8-bit precision)
-    return bus.read_byte(ADDRESS)</p>
-<p>try:
-    print("Reading Hall sensor analog values... Press Ctrl+C to stop.")
+    <h3><pre><code>import smbus2
+import time
+
+# PCF8591 default I2C address
+address = 0x48 
+
+# Command to read from AIN0
+# 0x40 enables analog output, last bits (00) select AIN0
+cmd = 0x40 
+
+bus = smbus2.SMBus(1) # Use bus 1 for modern Pi boards
+
+try:
     while True:
-        value = read_analog(0)  # Reading from AIN0
-        voltage = value * (3.3 / 255.0)  # Convert 0-255 to 0-3.3V</p>
-<p>print(f"Raw Value: {value} | Voltage: {voltage:.2f}V")
-        time.sleep(0.5)</p>
-<p>except KeyboardInterrupt:
-    print("\nProgram stopped.")</p>
-</h3>
+        # PCF8591 requires a "dummy read" or a write to set the channel
+        bus.write_byte(address, cmd) 
+        # Read the current value (0-255)
+        value = bus.read_byte(address)
+        
+        print(f"Hall Sensor Analog Value: {value}")
+        
+        # Simple Logic: 128 is neutral (no magnet)
+        if value > 160:
+            print("South Pole Detected")
+        elif value < 90:
+            print("North Pole Detected")
+            
+        time.sleep(0.2)
+except KeyboardInterrupt:
+    print("Cleanup and Exit")
+    </code></pre></h3>
    </heading>
   </section>
  </body>
