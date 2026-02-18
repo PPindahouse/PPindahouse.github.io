@@ -9,35 +9,44 @@
    <heading> 
     <h1>Ryan J Shih</h1>
     <h3><pre><code>import smbus2
+import RPi.GPIO as GPIO
 import time
 
-# PCF8591 default I2C address
-address = 0x48 
+# I2C setup for PCF8591
+address = 0x48
+bus = smbus2.SMBus(1)
 
-# Command to read from AIN0
-# 0x40 enables analog output, last bits (00) select AIN0
-cmd = 0x40 
+# GPIO setup for digital pin
+DIGITAL_PIN = 17
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(DIGITAL_PIN, GPIO.IN)
 
-bus = smbus2.SMBus(1) # Use bus 1 for modern Pi boards
+def read_analog(channel):
+    # 0x40 enables ADC; channel 0 corresponds to AIN0
+    bus.write_byte(address, 0x40 + channel)
+    bus.read_byte(address) # Dummy read
+    return bus.read_byte(address)
 
 try:
+    print("Reading Hall Sensor (Ctrl+C to stop)...")
     while True:
-        # PCF8591 requires a "dummy read" or a write to set the channel
-        bus.write_byte(address, cmd) 
-        # Read the current value (0-255)
-        value = bus.read_byte(address)
+        # 1. Read Analog Value (0-255)
+        analog_val = read_analog(0)
         
-        print(f"Hall Sensor Analog Value: {value}")
+        # 2. Read Digital State (0 or 1)
+        # Note: Most Hall modules are 'Active Low' (0 when magnet is near)
+        digital_state = GPIO.input(DIGITAL_PIN)
         
-        # Simple Logic: 128 is neutral (no magnet)
-        if value > 160:
-            print("South Pole Detected")
-        elif value < 90:
-            print("North Pole Detected")
-            
+        status = "MAGNET DETECTED" if digital_state == 0 else "No Magnet"
+        
+        print(f"Analog: {analog_val:3d} | Digital: {digital_state} ({status})")
+        
         time.sleep(0.2)
+
 except KeyboardInterrupt:
-    print("Cleanup and Exit")
+    GPIO.cleanup()
+    print("\nProgram stopped.")
+
     </code></pre></h3>
    </heading>
   </section>
