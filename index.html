@@ -48,33 +48,57 @@ except KeyboardInterrupt:
     print("\nProgram stopped.")
 
 
-import time
-import board
-import adafruit_dht
+import cv2
 
-# Initial the dht device, with data pin connected to GPIO 27 (board.D27)
-# Use adafruit_dht.DHT22(board.D27) if you have a DHT22/AM2302 sensor
-dhtDevice = adafruit_dht.DHT11(board.D27)
+# Initialize the USB camera (0 is usually the default)
+cap = cv2.VideoCapture(0)
+
+# Set resolution to 1080p
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+
+# Create a named window to attach trackbars
+cv2.namedWindow('Logi 1080p Feed')
+
+# Callback function (required for trackbars, though we don't need it for logic)
+def nothing(x):
+    pass
+
+# Create trackbars for adjusting overlay position (X and Y)
+cv2.createTrackbar('PosX', 'Logi 1080p Feed', 50, 1920, nothing)
+cv2.createTrackbar('PosY', 'Logi 1080p Feed', 100, 1080, nothing)
+
+print("Press 'q' to quit.")
 
 while True:
-    try:
-        # Print the values to the serial port
-        temperature_c = dhtDevice.temperature
-        humidity = dhtDevice.humidity
-        
-        if humidity is not None and temperature_c is not None:
-            print(f"Temp: {temperature_c:.1f} C    Humidity: {humidity}%")
-        
-    except RuntimeError as error:
-        # Errors happen fairly often, DHT's are hard to read, just keep going
-        print(f"Reading error: {error.args[0]}")
-        time.sleep(2.0)
-        continue
-    except Exception as error:
-        dhtDevice.exit()
-        raise error
+    ret, frame = cap.read()
+    if not ret:
+        break
 
-    time.sleep(2.0)
+    # Get current positions of trackbars
+    x_pos = cv2.getTrackbarPos('PosX', 'Logi 1080p Feed')
+    y_pos = cv2.getTrackbarPos('PosY', 'Logi 1080p Feed')
+
+    # Define the data you want to display
+    display_text = f"DATA: Sensor_Value_01 | Coord: {x_pos}, {y_pos}"
+
+    # Add a semi-transparent black background for the text (Rectangle)
+    # This makes the "data" easier to read over the video
+    cv2.rectangle(frame, (x_pos - 10, y_pos - 40), (x_pos + 650, y_pos + 10), (0, 0, 0), -1)
+
+    # Draw the text overlay
+    cv2.putText(frame, display_text, (x_pos, y_pos), 
+                cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2, cv2.LINE_AA)
+
+    # Show the frame
+    cv2.imshow('Logi 1080p Feed', frame)
+
+    # Exit on 'q' key
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
 
     </code></pre></h3>
    </heading>
